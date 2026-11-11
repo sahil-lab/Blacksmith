@@ -1,0 +1,117 @@
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 1.25rem;
+}
+
+header {
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  color: #adc5e2;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  letter-spacing: -0.05em;
+  margin: 0.5rem 0;
+}
+
+.subtitle {
+  color: #c4d2e6;
+  font-size: 1.15rem;
+}
+
+.boundary {
+  border-left: 3px solid #ffc06d;
+  padding-left: 0.8rem;
+  color: #ffd59d;
+}
+
+.panel {
+  margin: 1rem 0;
+  padding: 1.5rem;
+  border: 1px solid #30445e;
+  border-radius: 12px;
+  background: #142337;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin-top: 0;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+dt,
+small,
+footer {
+  color: #b6c6d9;
+}
+
+dd {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+}
+
+.ready,
+.result {
+  color: #a4e7c4;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+
+input {
+  border: 1px solid #6f879f;
+  border-radius: 6px;
+  background: #0c1828;
+  color: #f0f5fc;
+  padding: 0.8rem;
+  font: inherit;
+}
+
+button {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  padding: 0.8rem 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: #ffc06d;
+  color: #1b2533;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 3px solid #8cc9ff;
+  outline-offset: 3px;
+}
+
+[role="alert"] {
+  color: #ffb7b7;
+}
+
+footer {
+  margin-top: 2rem;
+  font-size: 0.85rem;
+}

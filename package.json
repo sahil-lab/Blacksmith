@@ -1,0 +1,26 @@
+{
+  "name": "blacksmith",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22.18.0 <23"
+  },
+  "scripts": {
+    "contracts:generate": "openapi-typescript packages/contracts/openapi.yaml -o packages/contracts/schema.d.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm run lint --workspace @blacksmith/web",
+    "typecheck": "npm run contracts:generate && npm run typecheck --workspace @blacksmith/web && npm run typecheck:e2e --workspace @blacksmith/web",
+    "build": "npm run contracts:generate && npm run build --workspace @blacksmith/web && npm run typecheck:e2e --workspace @blacksmith/web",
+    "test": "npm run test --workspace @blacksmith/web",
+    "test:e2e": "playwright test --config tests/e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "openapi-typescript": "7.13.0",
+    "prettier": "3.10.0"
+  }
+}

@@ -1,0 +1,16 @@
+.local/
+node_modules/
+dist/
+target/
+coverage/
+test-results/
+playwright-report/
+packages/contracts/schema.d.ts
+.env
+.env.*
+!.env.example
+*.log
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

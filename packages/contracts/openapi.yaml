@@ -1,0 +1,155 @@
+openapi: 3.1.0
+info:
+  title: Blacksmith Phase 1 Skeleton
+  version: 0.1.0
+  description: Synthetic, simulation-only preflight. No jobs are persisted or executed.
+servers:
+  - url: http://127.0.0.1:18202
+paths:
+  /api/system:
+    get:
+      operationId: getSystemInfo
+      responses:
+        "200":
+          description: Database-backed bootstrap information.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemInfo"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+  /api/preflight:
+    post:
+      operationId: validateSyntheticPreflight
+      description: Side-effect-free validation; not a job submission or execution.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreflightRequest"
+      responses:
+        "200":
+          description: Validated only; nothing persisted or executed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreflightResponse"
+        "400":
+          description: Invalid JSON, unsupported fields, or validation failure.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /actuator/health/liveness:
+    get:
+      operationId: getLiveness
+      responses:
+        "200":
+          $ref: "#/components/responses/Healthy"
+        "503":
+          $ref: "#/components/responses/Unhealthy"
+  /actuator/health/readiness:
+    get:
+      operationId: getReadiness
+      description: Includes PostgreSQL connectivity.
+      responses:
+        "200":
+          $ref: "#/components/responses/Healthy"
+        "503":
+          $ref: "#/components/responses/Unhealthy"
+components:
+  responses:
+    Healthy:
+      description: Healthy; internal component details are suppressed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Health"
+    Unhealthy:
+      description: Service is not healthy.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Health"
+    Unavailable:
+      description: Database unavailable or bootstrap state invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    SystemInfo:
+      type: object
+      additionalProperties: false
+      required: [application, phase, executionMode, schemaVersion]
+      properties:
+        application:
+          type: string
+          const: Blacksmith
+        phase:
+          type: integer
+          const: 1
+        executionMode:
+          type: string
+          const: SIMULATED
+        schemaVersion:
+          type: integer
+          minimum: 1
+    PreflightRequest:
+      type: object
+      additionalProperties: false
+      required: [workloadName, simulation]
+      properties:
+        workloadName:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        simulation:
+          type: boolean
+          const: true
+    PreflightResponse:
+      type: object
+      additionalProperties: false
+      required: [workloadName, executionMode, persisted]
+      properties:
+        workloadName:
+          type: string
+        executionMode:
+          type: string
+          const: SIMULATED
+        persisted:
+          type: boolean
+          const: false
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN, OUT_OF_SERVICE, UNKNOWN]
+    Problem:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field:
+                type: string
+              message:
+                type: string

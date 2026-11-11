@@ -1,0 +1,231 @@
+name: blacksmith
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "2"
+
+x-restricted: &restricted
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  read_only: true
+  logging: *logging
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: blacksmith
+      POSTGRES_USER: blacksmith
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks: [data]
+    command: [postgres, -c, shared_buffers=64MB, -c, max_connections=20]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U blacksmith -d blacksmith"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    cpus: 0.25
+    mem_limit: 192m
+    pids_limit: 64
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+  api:
+    <<: *restricted
+    image: blacksmith-api:local
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+    environment:
+      BLACKSMITH_DATABASE_URL: jdbc:postgresql://db:5432/blacksmith
+      BLACKSMITH_DATABASE_USER: blacksmith
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=65 -XX:ActiveProcessorCount=2
+    secrets:
+      - source: db_password
+        target: spring.datasource.password
+    ports:
+      - "127.0.0.1:18202:8080"
+    networks: [frontend, data]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          CMD-SHELL,
+          "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/readiness",
+        ]
+      start_period: 40s
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cpus: 0.75
+    mem_limit: 512m
+    pids_limit: 128
+
+  web:
+    <<: *restricted
+    image: blacksmith-web:local
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    ports:
+      - "127.0.0.1:18102:8080"
+    networks: [frontend]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, "wget -q -O /dev/null http://127.0.0.1:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cpus: 0.25
+    mem_limit: 96m
+    pids_limit: 64
+
+  test-db:
+    profiles: [checks]
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: blacksmith_test
+      POSTGRES_USER: blacksmith_test
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_test_password
+    secrets:
+      - db_test_password
+    networks: [test-data]
+    command: [postgres, -c, shared_buffers=32MB, -c, max_connections=20]
+    tmpfs:
+      - /var/lib/postgresql/data:rw,nosuid,size=192m
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U blacksmith_test -d blacksmith_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    cpus: 0.25
+    mem_limit: 256m
+    pids_limit: 64
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+  api-tool:
+    profiles: [checks]
+    image: maven:3.9-eclipse-temurin-21
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+      - maven_cache:/maven-cache
+    environment:
+      MAVEN_OPTS: -Xmx384m -XX:ActiveProcessorCount=2
+      BLACKSMITH_DATABASE_URL: jdbc:postgresql://test-db:5432/blacksmith_test
+      BLACKSMITH_DATABASE_USER: blacksmith_test
+    secrets:
+      - source: db_test_password
+        target: spring.datasource.password
+    networks: [tooling, test-data]
+    entrypoint:
+      - mvn
+      - --batch-mode
+      - --no-transfer-progress
+      - -Dmaven.repo.local=/maven-cache
+      - -f
+      - services/api/pom.xml
+    command: [verify]
+    cpus: 1.5
+    mem_limit: 1536m
+    pids_limit: 256
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+  node-tool:
+    profiles: [checks]
+    image: node:22-bookworm-slim
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+      - type: volume
+        source: node_modules
+        target: /workspace/node_modules
+        volume:
+          nocopy: true
+      - type: volume
+        source: web_node_modules
+        target: /workspace/apps/web/node_modules
+        volume:
+          nocopy: true
+      - npm_cache:/npm-cache
+    environment:
+      npm_config_cache: /npm-cache
+      NODE_OPTIONS: --max-old-space-size=768
+      UV_THREADPOOL_SIZE: 2
+    networks: [tooling]
+    command: [npm, run, build]
+    cpus: 1.5
+    mem_limit: 1536m
+    pids_limit: 256
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+  e2e:
+    profiles: [checks]
+    image: mcr.microsoft.com/playwright:v1.65.0-noble
+    init: true
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+      - type: volume
+        source: node_modules
+        target: /workspace/node_modules
+        read_only: true
+        volume:
+          nocopy: true
+      - type: volume
+        source: web_node_modules
+        target: /workspace/apps/web/node_modules
+        read_only: true
+        volume:
+          nocopy: true
+    environment:
+      CI: "true"
+      BLACKSMITH_WEB_URL: http://web:8080
+      BLACKSMITH_API_URL: http://api:8080
+    networks: [frontend]
+    command: [npm, run, test:e2e]
+    shm_size: 256m
+    cpus: 1
+    mem_limit: 1024m
+    pids_limit: 256
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+networks:
+  frontend:
+  data:
+    internal: true
+  tooling:
+  test-data:
+    internal: true
+
+volumes:
+  db_data:
+  maven_cache:
+  npm_cache:
+  node_modules:
+  web_node_modules:
+
+secrets:
+  db_password:
+    file: ../../.local/secrets/db_password
+  db_test_password:
+    file: ../../.local/secrets/db_test_password

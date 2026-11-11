@@ -1,0 +1,10 @@
+.local
+node_modules
+dist
+target
+coverage
+test-results
+playwright-report
+package-lock.json
+packages/contracts/schema.d.ts
+*.pdf
