@@ -9,10 +9,15 @@ systems or real customer data.
 This iteration covers **Phase 0 (contract and safety)** and **Phase 1 (working
 skeleton)** only. See [the phase ledger](docs/PLAN.md) for verified results.
 
-The skeleton will provide a React/TypeScript dashboard, a Java 21/Spring Boot 3 API,
+The verified skeleton provides a React/TypeScript dashboard, a Java 21/Spring Boot 3 API,
 PostgreSQL, a versioned bootstrap migration, health checks, and a simulation-only
 request-validation round trip. It does **not** queue, schedule, execute, or persist
 jobs. A successful preflight is not a successful CI run.
+
+The build-lab interface pairs self-hosted typography and an original animated
+forge illustration with real stack status and a request/response workbench.
+It supports mobile layouts, keyboard navigation, and reduced-motion preferences.
+See the [UI refinement evidence](docs/PLAN.md#ui-refinement) for the latest checks.
 
 Planned domain routes (`POST /jobs`, `GET /jobs/{id}`, `GET /runners`,
 `GET /metrics`), runner leases, caches, fairness policies, and benchmarks belong to
@@ -42,6 +47,13 @@ The scripts always select Compose project `blacksmith`. The database has **no
 published port**. Local credentials are generated once into ignored local storage,
 never printed, and mounted as container secrets. Do not delete or rotate these
 credentials while retaining the corresponding database volume.
+
+The runtime networks use local-lab subnets `198.18.102.0/28` and
+`198.18.102.16/28`, checked as unoccupied on this host. If another host reports a
+subnet collision, stop and choose non-overlapping addresses in the Compose file;
+never prune or reconfigure unrelated networks. Keep sufficient free disk space
+for dependency caches and Docker images; disk-full errors must be resolved before
+retrying a failed build.
 
 To stop only this project's application containers without removing its data:
 

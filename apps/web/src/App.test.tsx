@@ -64,7 +64,9 @@ describe("Phase 1 dashboard", () => {
     render(<App />);
     expect(await screen.findByRole("alert")).toHaveTextContent("HTTP 503");
     expect(screen.queryByText("API and PostgreSQL ready")).not.toBeInTheDocument();
-    expect(screen.getByRole("button")).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Validate synthetic workload" }),
+    ).toBeDisabled();
   });
 
   it("rejects an incompatible system response", async () => {
@@ -75,7 +77,9 @@ describe("Phase 1 dashboard", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "unexpected system response",
     );
-    expect(screen.getByRole("button")).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Validate synthetic workload" }),
+    ).toBeDisabled();
   });
 
   it("shows a preflight error and allows retry", async () => {
@@ -89,7 +93,9 @@ describe("Phase 1 dashboard", () => {
     );
     expect(await screen.findByRole("alert")).toHaveTextContent("Preflight failed");
     expect(screen.queryByText(/no job was persisted/)).not.toBeInTheDocument();
-    expect(screen.getByRole("button")).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Validate synthetic workload" }),
+    ).toBeEnabled();
   });
 
   it("does not display execution or persistence claims from an invalid response", async () => {
@@ -109,6 +115,50 @@ describe("Phase 1 dashboard", () => {
     );
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "unexpected preflight response",
+    );
+  });
+
+  it("switches between real payloads and clears stale validation when the label changes", async () => {
+    readyResponses();
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        workloadName: "synthetic-demo",
+        executionMode: "SIMULATED",
+        persisted: false,
+      }),
+    );
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByText("API and PostgreSQL ready");
+    expect(screen.getByLabelText("Request JSON")).toHaveTextContent(
+      '"simulation": true',
+    );
+    await user.click(screen.getByRole("button", { name: "Response" }));
+    expect(screen.getByText("Your response lives here.")).toBeVisible();
+    await user.click(
+      screen.getByRole("button", { name: "Validate synthetic workload" }),
+    );
+    expect(await screen.findByLabelText("Response JSON")).toHaveTextContent(
+      '"persisted": false',
+    );
+    expect(screen.getByRole("button", { name: "Response" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await user.clear(screen.getByRole("textbox", { name: "Workload name" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Workload name" }),
+      "next-idea",
+    );
+    expect(screen.getByLabelText("Request JSON")).toHaveTextContent(
+      '"workloadName": "next-idea"',
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByText("200 OK")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Request" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
   });
 });

@@ -211,8 +211,14 @@ services:
 
 networks:
   frontend:
+    ipam:
+      config:
+        - subnet: 198.18.102.0/28
   data:
     internal: true
+    ipam:
+      config:
+        - subnet: 198.18.102.16/28
   tooling:
   test-data:
     internal: true

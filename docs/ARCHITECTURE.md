@@ -18,6 +18,11 @@ All services belong to Compose project `blacksmith`. Only web and API bind host
 ports, on IPv4 loopback. The DB and API share a private, internal data network.
 The API has a separate frontend network connection for the web proxy.
 
+Runtime networks use checked, small local-lab subnets: `198.18.102.0/28` for
+frontend and `198.18.102.16/28` for internal data. This avoids allocating from the
+shared host's exhausted default Docker pools. Check for route overlap before
+reusing these addresses on another host.
+
 ## Interfaces
 
 | Route                            | Behavior                                                                                                        |

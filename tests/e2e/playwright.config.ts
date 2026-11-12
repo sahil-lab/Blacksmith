@@ -11,8 +11,8 @@ export default defineConfig({
   outputDir: "../../test-results/artifacts",
   reporter: [
     ["list"],
-    ["junit", { outputFile: "test-results/e2e.xml" }],
-    ["html", { outputFolder: "playwright-report", open: "never" }],
+    ["junit", { outputFile: "../../test-results/e2e.xml" }],
+    ["html", { outputFolder: "../../playwright-report", open: "never" }],
   ],
   use: {
     ...devices["Desktop Chrome"],

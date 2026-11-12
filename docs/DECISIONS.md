@@ -20,3 +20,13 @@
 
 These decisions can be revised only with evidence and within the approved scope.
 No alternative implementation is silently substituted after a failure.
+
+## Shared-host network exhaustion
+
+The first normal-stack start failed because Docker's predefined address pools
+were fully allocated. Existing Docker CIDRs and host routes were inspected
+read-only. The two new Blacksmith runtime networks use unoccupied local-lab
+subnets `198.18.102.0/28` (frontend) and `198.18.102.16/28` (internal data).
+These non-Internet-routed lab addresses avoid the host's private/VPN routes.
+Existing check networks were retained unchanged; no network was removed and no
+Docker daemon configuration or another project's resources were changed.

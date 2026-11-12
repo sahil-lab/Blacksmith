@@ -32,7 +32,6 @@ jobs:
           path: |
             services/api/target/surefire-reports
             services/api/target/failsafe-reports
-            apps/web/coverage
             test-results
             playwright-report
       - name: Stop this project's services
