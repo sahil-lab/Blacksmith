@@ -476,8 +476,16 @@ inspection on 2026-11-13 found that it now is:
   attempt to redeploy only `web` then failed because its upstream was down.
   `db`, `api`, and `web` of Compose project `blacksmith` were started again and
   nothing else; the database volume was intact and schema version 1 read back.
-- **Docker.** No prune, no global cleanup, and no change to another project's
-  containers, networks, volumes, or images. Listing commands were read-only.
+- **Stack removed at 16:06.** On 2026-11-13 at 16:06 local time, after the
+  verification and captures recorded above, this project's `db`, `api`, and
+  `web` containers and its exited `test-db` container were stopped and removed.
+  In the same minute the Docker daemon's event log shows at least 34 containers
+  removed across the Compose projects on this machine; the log keeps only recent
+  events, so the real number may be higher. Nothing in this work issued those
+  commands: its only Docker activity after the last capture was one-shot audit
+  and format tool containers. Who or what did it was not established. The
+  images, the database volume, and the networks of project `blacksmith` were
+  left in place.
 - **Capture runs.** The installed Edge ran headless on a throwaway profile under
   `.local`, which the script removed after each run. No process from it was
   left after the last run.
