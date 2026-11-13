@@ -13,8 +13,11 @@
 ## Phase gates
 
 - Phase 0: required documentation, conventions, ignore rules and CI authored
-  before application code. Git initialization remains separately approval-gated.
+  before application code. Git writes remain separately approval-gated; see
+  [repository state](#repository-state-observed-on-2026-11-13).
 - Phase 1: **complete and locally verified**, including persistent test evidence.
+  The front end was later rebuilt twice at the user's request; the current one
+  is recorded under [Immersive UI rebuild](#immersive-ui-rebuild).
 - Phases 2-6: not started and not authorized.
 
 ## Validation ledger
@@ -95,8 +98,10 @@ removed automatically. Application services remain running for local evaluation.
 
 No current runtime blocker remains. Constraints and follow-up risks:
 
-- Keep free disk space for builds; abandoned host dependency caches were not
-  deleted because separate deletion approval was unavailable.
+- Keep free disk space for builds. At this point the abandoned host dependency
+  caches were left in place because separate deletion approval was unavailable;
+  they were removed later, see
+  [housekeeping and disclosures](#housekeeping-and-disclosures).
 - Development-only ESLint/minimatch advisory chain: 10 moderate findings;
   production-only npm audit found zero. No forced dependency changes were made.
 - Java 21 tests emit Mockito dynamic-agent warnings; tests pass, but a future JDK
@@ -140,11 +145,15 @@ and reject a published database port.
 | [Frontend JUnit](../test-results/web.xml)                                                                             | 5 passed                                       |
 | [Browser/API JUnit](../test-results/e2e.xml)                                                                          | 2 passed                                       |
 | [Browser HTML report](../playwright-report/index.html)                                                                | Both smoke scenarios passed                    |
-| [Desktop screenshot](../.local/evidence/dashboard.png)                                                                | Real ready stack and validated synthetic label |
-| [Mobile screenshot](../.local/evidence/dashboard-mobile.png)                                                          | 390px layout, no horizontal overflow           |
+| Desktop screenshot `dashboard.png` (removed with the superseded design)                                               | Real ready stack and validated synthetic label |
+| Mobile screenshot `dashboard-mobile.png` (removed with the superseded design)                                         | 390px layout, no horizontal overflow           |
+
+The JUnit and HTML report files are overwritten by every run, so the counts in
+this table are those of the initial Phase 1 run, not what the linked files hold
+now. Current counts are under [Immersive UI rebuild](#immersive-ui-rebuild).
 
 The initial Phase 0/1 verification passed all 34 tests with no skipped tests.
-The UI refinement below records the subsequently expanded frontend/browser suites.
+The sections below record the subsequently expanded frontend/browser suites.
 Reports and screenshots are generated local evidence, not committed fixtures.
 P0-01/P0-02 and P1-01 through P1-08 are satisfied within the explicitly documented
 Git/hosted-CI approval boundary. No later-phase acceptance gate is claimed.
@@ -169,9 +178,15 @@ Git/hosted-CI approval boundary. No later-phase acceptance gate is claimed.
 - packages/contracts/openapi.yaml; services/worker/README.md; benchmarks/README.md.
 
 Generated contract types, dependency caches, build output and reports are ignored.
-The supplied PDF was not edited. No Git, cloud, or other-session actions occurred.
+The supplied PDF was not edited. No Git, cloud, or other-session actions were
+taken by this work.
 
 ## UI refinement
+
+**Superseded.** The user judged this design insufficient, and it was replaced by
+the [immersive rebuild](#immersive-ui-rebuild). The record below is kept as
+history: `App.css` and `ForgeScene.tsx` no longer exist, and the screenshots of
+this design were removed with it.
 
 User-requested visual redesign only; no Phase 2 domain features were introduced.
 The result is an original industrial build lab rather than the initial scaffold:
@@ -206,10 +221,9 @@ Final focused validation completed successfully:
 The Java sources, API contracts, database, and runtime isolation configuration
 were unchanged. The Java unit/integration suites were not rerun for this
 presentation-only change; real browser smoke still exercised the API and database.
-The current UI evidence is [frontend JUnit](../test-results/web.xml),
-[browser JUnit](../test-results/e2e.xml), [HTML report](../playwright-report/index.html),
-[desktop](../.local/evidence/dashboard.png), and
-[mobile](../.local/evidence/dashboard-mobile.png) screenshots.
+The UI evidence at the time was the frontend and browser JUnit files, the HTML
+report, and desktop and mobile screenshots (`dashboard.png` and
+`dashboard-mobile.png`, since removed).
 
 Build validation caught and corrected a test-selector type mismatch and incorrect
 font-package import paths. Visual inspection then caught a CSP-blocked inlined

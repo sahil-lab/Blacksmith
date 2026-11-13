@@ -14,10 +14,16 @@ PostgreSQL, a versioned bootstrap migration, health checks, and a simulation-onl
 request-validation round trip. It does **not** queue, schedule, execute, or persist
 jobs. A successful preflight is not a successful CI run.
 
-The build-lab interface pairs self-hosted typography and an original animated
-forge illustration with real stack status and a request/response workbench.
-It supports mobile layouts, keyboard navigation, and reduced-motion preferences.
-See the [UI refinement evidence](docs/PLAN.md#ui-refinement) for the latest checks.
+The interface is an immersive single page rather than a dashboard. A hand-written
+WebGL2 scene of embers forms an anvil, a cold job queue, a runner pool, a glowing
+field, and a hammer as you scroll, with kinetic variable type, a pinned sideways
+method section, and a strike interaction. All of that is decoration over a page
+that works without it: every figure is captioned as an illustration, the warm or
+cold look follows the one real readiness reading, and the workbench is the only
+functional surface. Without WebGL2, on a software renderer, or with reduced
+motion, the same page runs with a static illustration. See the
+[front-end notes](apps/web/README.md) and the
+[immersive UI rebuild evidence](docs/PLAN.md#immersive-ui-rebuild).
 
 Planned domain routes (`POST /jobs`, `GET /jobs/{id}`, `GET /runners`,
 `GET /metrics`), runner leases, caches, fairness policies, and benchmarks belong to
@@ -43,6 +49,18 @@ configuration, and test reports remain inside this project.
 - Readiness, including PostgreSQL: <http://127.0.0.1:18202/actuator/health/readiness>
 - API contract: [OpenAPI](packages/contracts/openapi.yaml)
 
+The test containers have no GPU, so they exercise the static fallback and a
+small software render of the scene. To see and check what a real GPU draws, an
+optional Windows-only script drives an installed Edge or Chrome headless on a
+throwaway profile and saves screenshots plus a JSON summary to ignored local
+storage. It needs the stack to be running and is not part of `Verify.ps1` or CI:
+
+```powershell
+.\scripts\Capture-Scene.ps1
+.\scripts\Capture-Scene.ps1 -Width 1280 -Height 650 -Scale 1.5 -DesktopOnly -OutputDirectory .\.local\evidence\display
+.\scripts\Capture-Scene.ps1 -Width 1280 -Height 650 -Scale 1.5 -Probe .\scripts\probes\transition-pacing.js
+```
+
 The scripts always select Compose project `blacksmith`. The database has **no
 published port**. Local credentials are generated once into ignored local storage,
 never printed, and mounted as container secrets. Do not delete or rotate these
@@ -61,16 +79,19 @@ To stop only this project's application containers without removing its data:
 docker compose --project-name blacksmith --file .\infra\docker\compose.yaml stop web api db
 ```
 
-Do not use global Docker cleanup commands. Do not initialize Git, configure a
-remote, commit, push, provision cloud resources, or access real data without
-separate approval.
+Do not use global Docker cleanup commands. Do not commit, push, change Git
+remotes, provision cloud resources, or access real data without separate
+approval.
 
 ## Skeleton walkthrough
 
-1. Open the dashboard and confirm API/database readiness.
-2. Submit the synthetic workload label `synthetic-demo`.
-3. Confirm the response explicitly says simulation only, with no job persisted.
-4. Inspect the documented invalid-request tests; a request to execute real code
+1. Open the page and wait for the intro; the header shows `Stack ready` once the
+   API and database have answered.
+2. Scroll. The embers reform for each section; click the opening screen or use
+   `Strike the anvil`. None of this touches the API.
+3. In the workbench, submit the synthetic workload label `synthetic-demo`.
+4. Confirm the response explicitly says simulation only, with no job persisted.
+5. Inspect the documented invalid-request tests; a request to execute real code
    must be rejected.
 
 This is a skeleton demonstration, not the scheduler demonstration or benchmark
@@ -80,11 +101,12 @@ requested for Phase 6.
 
 | Directory                                | Purpose                                                 |
 | ---------------------------------------- | ------------------------------------------------------- |
-| [apps/web](apps/web)                     | Dashboard and frontend tests                            |
+| [apps/web](apps/web)                     | Front end, WebGL scene, and frontend tests              |
 | [services/api](services/api)             | API, migration, Java tests                              |
 | [services/worker](services/worker)       | Deferred simulated-worker boundary                      |
 | [packages/contracts](packages/contracts) | OpenAPI and generated frontend types                    |
 | [infra/docker](infra/docker)             | Isolated local stack and validation tooling             |
+| [scripts](scripts)                       | Start, verify, and real-GPU capture workflows           |
 | [tests/e2e](tests/e2e)                   | Browser/API smoke validation                            |
 | [benchmarks](benchmarks)                 | Deferred reproducible evaluation                        |
 | [docs](docs)                             | Requirements, architecture, safety, decisions, evidence |

@@ -28,8 +28,8 @@ benchmark definition of done were read, but do not authorize later-phase work.
   model, coding conventions, acceptance gates, and decisions before application
   implementation.
 - Scaffold the monorepo layout, ignore rules, and CI configuration.
-- Preserve the supplied PDF. Git metadata is approval-gated separately; the
-  existing directory is sufficient for local build and test.
+- Preserve the supplied PDF. Git writes are approval-gated separately; the
+  directory itself is sufficient for local build and test.
 
 ## Phase 1 requirements
 

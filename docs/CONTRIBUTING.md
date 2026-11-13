@@ -16,6 +16,12 @@
 - Use the project scripts/container tooling, not host Node 14 or a globally
   installed Java/Maven. Do not independently replace Docker-managed runtimes.
 - Preserve the guide and unrelated user work. No Git operations without approval.
+- Decoration must never present itself as data. Caption illustrations, show a
+  number only if it is measured or real, and keep controls truthful about state.
+- The browser tests have no GPU. After any change to the WebGL scene, shaders,
+  or formations, run `scripts/Capture-Scene.ps1` on real hardware, look at the
+  captures, and record what it reported.
 
-CI is defined for a future approved Git repository. A local passing run is not
-evidence that hosted CI has run.
+The CI workflow runs on push and pull request. A local passing run is not
+evidence that hosted CI has run or passed; this work has not checked any hosted
+run.

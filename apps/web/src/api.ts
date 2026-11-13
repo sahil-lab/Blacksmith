@@ -31,15 +31,36 @@ function isPreflightResponse(value: unknown): value is PreflightResponse {
 
 async function fetchJson(path: string, init: RequestInit = {}): Promise<unknown> {
   const timeout = AbortSignal.timeout(8000);
-  const response = await fetch(path, {
-    ...init,
-    signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout,
-  });
+  // Browsers describe transport failures in their own words ("Failed to
+  // fetch", "Load failed"); report plainly what happened instead.
+  const describe = (error: unknown, otherwise: string): Error => {
+    if (init.signal?.aborted) {
+      // The caller cancelled; pass that through untouched.
+      return error instanceof Error ? error : new Error("The request was cancelled.");
+    }
+    return new Error(
+      timeout.aborted ? "The API did not answer within 8 seconds." : otherwise,
+      { cause: error },
+    );
+  };
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...init,
+      signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout,
+    });
+  } catch (error) {
+    throw describe(error, "The API could not be reached.");
+  }
   if (!response.ok) {
     throw new Error(`API request failed (HTTP ${response.status}).`);
   }
-  const value: unknown = await response.json();
-  return value;
+  try {
+    const value: unknown = await response.json();
+    return value;
+  } catch (error) {
+    throw describe(error, "The API returned a response that is not JSON.");
+  }
 }
 
 export async function loadSystem(signal: AbortSignal): Promise<SystemInfo> {

@@ -29,7 +29,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
 });
 
-describe("Phase 1 dashboard", () => {
+describe("Blacksmith build lab", () => {
   it("uses the API and validates only a simulated workload", async () => {
     readyResponses();
     fetchMock.mockResolvedValueOnce(
@@ -40,8 +40,9 @@ describe("Phase 1 dashboard", () => {
       }),
     );
     const user = userEvent.setup();
-    render(<App />);
+    const { container } = render(<App />);
     expect(await screen.findByText("API and PostgreSQL ready")).toBeVisible();
+    expect(container.querySelector(".app")).toHaveAttribute("data-heat", "ready");
     await user.click(
       screen.getByRole("button", { name: "Validate synthetic workload" }),
     );
@@ -55,18 +56,44 @@ describe("Phase 1 dashboard", () => {
         body: JSON.stringify({ workloadName: "synthetic-demo", simulation: true }),
       }),
     );
+    // A real validated answer is the only automatic strike.
+    expect(container.querySelector("[data-strikes]")).toHaveAttribute(
+      "data-strikes",
+      "1",
+    );
   });
 
   it("shows failed readiness instead of inventing a healthy stack", async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse(system))
       .mockResolvedValueOnce(jsonResponse({ status: "DOWN" }, 503));
-    render(<App />);
+    const { container } = render(<App />);
     expect(await screen.findByRole("alert")).toHaveTextContent("HTTP 503");
     expect(screen.queryByText("API and PostgreSQL ready")).not.toBeInTheDocument();
+    expect(container.querySelector(".app")).toHaveAttribute("data-heat", "cold");
     expect(
       screen.getByRole("button", { name: "Validate synthetic workload" }),
     ).toBeDisabled();
+  });
+
+  it("counts manual strikes and keeps motion and sound controls honest", async () => {
+    readyResponses();
+    const user = userEvent.setup();
+    const { container } = render(<App />);
+    await screen.findByText("API and PostgreSQL ready");
+    const meter = container.querySelector("[data-strikes]");
+    expect(meter).toHaveAttribute("data-strikes", "0");
+    await user.click(screen.getByRole("button", { name: "Strike the anvil" }));
+    await user.click(screen.getByRole("button", { name: "Strike the anvil" }));
+    expect(meter).toHaveAttribute("data-strikes", "2");
+
+    await user.click(screen.getByRole("button", { name: "Pause motion" }));
+    expect(screen.getByRole("button", { name: "Play motion" })).toBeVisible();
+    expect(container.querySelector(".app")).toHaveAttribute("data-motion", "off");
+
+    // No audio device exists here, so the control must not claim sound is on.
+    await user.click(screen.getByRole("button", { name: "Enable sound" }));
+    expect(screen.getByRole("button", { name: "Enable sound" })).toBeVisible();
   });
 
   it("rejects an incompatible system response", async () => {
@@ -80,6 +107,17 @@ describe("Phase 1 dashboard", () => {
     expect(
       screen.getByRole("button", { name: "Validate synthetic workload" }),
     ).toBeDisabled();
+  });
+
+  it("says plainly that the API is unreachable instead of echoing the browser", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    const { container } = render(<App />);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(
+      "Unable to verify the local stack: The API could not be reached. Reload after restoring the API.",
+    );
+    expect(alert).not.toHaveTextContent("Failed to fetch");
+    expect(container.querySelector(".app")).toHaveAttribute("data-heat", "cold");
   });
 
   it("shows a preflight error and allows retry", async () => {

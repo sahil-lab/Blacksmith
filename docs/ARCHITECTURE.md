@@ -70,6 +70,37 @@ deleting a volume requires explicit approval and is not part of startup/testing.
 - Database credentials are file-mounted secrets, not embedded in an image,
   manifest, frontend bundle, or checked-in environment file.
 
+## Front end
+
+The page is server-independent static content from the web container. It talks
+to the API only through the same-origin proxy, in two places:
+
+```mermaid
+flowchart LR
+    API["GET /api/system<br/>POST /api/preflight"] --> Client["api.ts<br/>runtime response validation"]
+    Client --> App["App.tsx<br/>page state"]
+    App --> Sections["sections<br/>signal and workbench show real values"]
+    App -->|"heat: ready, checking, or cold"| Canvas["ForgeCanvas.tsx"]
+    Scroll["Scroll, pointer, strikes"] --> Canvas
+    Canvas --> Engine["engine.ts<br/>WebGL2 scene"]
+    Engine -->|"renderer in use, embers drawn"| App
+```
+
+- The only API-derived input to the scene is one scalar, the readiness state at
+  page load. It sets the warm or cold look. No job, runner, or timing data
+  reaches the renderer; every formation is fixed, seeded geometry.
+- The scene is layered on top of a complete plain page. When WebGL2 is missing,
+  the renderer is software, the context is lost, or the first frame reports a
+  GL error, the page shows a static illustration instead, and the captions that
+  describe formations are not rendered.
+- The engine is loaded as a separate chunk after the first render. One shared
+  animation-frame loop drives the scene and the scroll-linked effects.
+- The quality governor in `quality.ts` picks a resolution, ember share, and
+  bloom tier from measured frame pace. It is a display concern only.
+
+Front-end structure, rules, and tests are described in the
+[front-end notes](../apps/web/README.md).
+
 ## Future boundaries
 
 The API will own contracts, authorization, state transitions, and persistence.
