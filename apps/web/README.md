@@ -71,12 +71,13 @@ hold; otherwise the page shows a static anvil drawing and drifting CSS embers:
 A lost WebGL context switches the page to the static art. With the system
 reduced-motion preference there is no intro, no pinned section, no flight
 between formations (they cross-fade), no cursor ring, and the motion control is
-disabled. The motion control pauses the scene and the CSS animation.
+disabled. The motion control stops the scene's drift, the marquee, the kinetic
+title, and the CSS animation; scrolling still changes the formation.
 
 The quality governor steps resolution, ember share, and finally bloom down when
 frames arrive late, keeps a lower tier only if frames really got quicker, and
 tries the tier above again after a calm spell. If no tier is quicker, the cause
-is the display or the machine, and full quality is restored.
+is the display or the machine, and the tier it started from is restored.
 
 ## Rules that real hardware taught
 
